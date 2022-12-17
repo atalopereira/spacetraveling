@@ -2,6 +2,38 @@
   box-sizing: border-box;
   margin: 0;
   padding: 0;
+  font-family: Inter;
 }
 
-// TODO
+:root {
+  --white: #F8F8F8;
+  --pink: #FF57B2;
+  --dark: #1A1D23;
+  --gray-100: #D7D7D7;
+  --gray-300: #BBBBBB;
+}
+
+@media(max-width: 1000px) {
+  html {
+    font-size: 93.75%;
+  }
+}
+
+@media(max-width: 720px) {
+  html {
+    font-size: 87.5%;
+  }
+}
+
+body {
+  background: var(--dark);
+  color: var(--white);
+}
+
+body, input, textarea, select, button {
+  font: 400 1rem "Inter", sans-serif
+}
+
+button {
+  cursor: pointer;
+}
