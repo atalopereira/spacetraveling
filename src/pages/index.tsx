@@ -31,7 +31,7 @@ interface HomeProps {
 export default function Home({ postsPagination }: HomeProps) {
   console.log('postsResponse: ', postsPagination);
   return (
-    <main className={styles.container}>
+    <main className={`${commonStyles.container} ${styles.homeContainer}`}>
       {postsPagination.results.map(post => (
         <section key={post.uid} className={styles.listPosts}>
           <h1>{post.data.title}</h1>
@@ -39,7 +39,7 @@ export default function Home({ postsPagination }: HomeProps) {
           <div>
             <div>
               <FiCalendar />
-              <span>15 Mar 2021</span>
+              <span>{post.first_publication_date}</span>
             </div>
             <div>
               <FiUser />
@@ -49,35 +49,37 @@ export default function Home({ postsPagination }: HomeProps) {
         </section>
       ))}
 
-      <span className={styles.loadPosts}>Carregar mais posts</span>
+      {postsPagination.next_page && (
+        <span className={styles.loadPosts}>Carregar mais posts</span>
+      )}
     </main>
   );
 }
 
 export const getStaticProps = async () => {
   const prismic = getPrismicClient({});
-  const postsResponse = await prismic.getByType('posts');
-
-  // const postsPagination = {
-  //   next_page: postsResponse.next_page,
-  //   results: postsResponse.results.map(currentPost => {
-  //     return {
-  //       ...currentPost,
-  //       first_publication_date: format(
-  //         Number(currentPost.first_publication_date),
-  //         "'Hoje é' eeee",
-  //         { locale: ptBR }
-  //       ),
-  //     };
-  //   }),
-  // };
+  const postsResponse = await prismic.getByType('posts', {
+    pageSize: 1,
+  });
 
   const postsPagination = {
     next_page: postsResponse.next_page,
-    results: postsResponse.results,
+    results: postsResponse.results.map(currentPost => {
+      return {
+        uid: currentPost.uid,
+        data: {
+          title: currentPost.data.title as string,
+          subtitle: currentPost.data.subtitle as string,
+          author: currentPost.data.author as string,
+        },
+        first_publication_date: format(
+          new Date(currentPost.first_publication_date),
+          'd MMM yy',
+          { locale: ptBR }
+        ),
+      };
+    }),
   };
-
-  console.log('postsResponse: ', postsResponse);
 
   return {
     props: { postsPagination },
