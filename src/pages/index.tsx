@@ -1,4 +1,8 @@
-import { GetStaticProps } from 'next';
+/* eslint-disable jsx-a11y/no-static-element-interactions */
+/* eslint-disable jsx-a11y/click-events-have-key-events */
+/* eslint-disable jsx-a11y/interactive-supports-focus */
+import Link from 'next/link';
+import { useState } from 'react';
 
 import { format } from 'date-fns';
 import ptBR from 'date-fns/locale/pt-BR';
@@ -29,28 +33,74 @@ interface HomeProps {
 }
 
 export default function Home({ postsPagination }: HomeProps) {
-  console.log('postsResponse: ', postsPagination);
+  const [posts, setPosts] = useState({
+    next_page: postsPagination.next_page,
+    results: postsPagination.results,
+  });
+
+  function formatPostdate(postsData: Post[]): Post[] {
+    const postsFormated = postsData.map(post => ({
+      uid: post.uid,
+      data: {
+        title: post.data.title as string,
+        subtitle: post.data.subtitle as string,
+        author: post.data.author as string,
+      },
+      first_publication_date: format(
+        new Date(post.first_publication_date),
+        'd MMM yy',
+        { locale: ptBR }
+      ),
+    }));
+
+    return postsFormated;
+  }
+
+  function loadposts() {
+    fetch(postsPagination.next_page)
+      .then(response => {
+        if (response.ok) {
+          return response.json();
+        }
+
+        throw response;
+      })
+      .then(data => {
+        const newPosts = {
+          next_page: data.next_page,
+          results: [...posts.results, ...formatPostdate(data.results)],
+        };
+        setPosts(newPosts);
+      })
+      .catch(error => {
+        console.log('error fetching', error);
+      });
+  }
   return (
     <main className={`${commonStyles.container} ${styles.homeContainer}`}>
-      {postsPagination.results.map(post => (
-        <section key={post.uid} className={styles.listPosts}>
-          <h1>{post.data.title}</h1>
-          <span>{post.data.subtitle}</span>
-          <div>
+      {posts.results.map(post => (
+        <Link key={post.uid} href={`/post/${post.uid}`}>
+          <section className={styles.listPosts}>
+            <h1>{post.data.title}</h1>
+            <span>{post.data.subtitle}</span>
             <div>
-              <FiCalendar />
-              <span>{post.first_publication_date}</span>
+              <div>
+                <FiCalendar />
+                <span>{post.first_publication_date}</span>
+              </div>
+              <div>
+                <FiUser />
+                <span>{post.data.author}</span>
+              </div>
             </div>
-            <div>
-              <FiUser />
-              <span>{post.data.author}</span>
-            </div>
-          </div>
-        </section>
+          </section>
+        </Link>
       ))}
 
-      {postsPagination.next_page && (
-        <span className={styles.loadPosts}>Carregar mais posts</span>
+      {posts.next_page && (
+        <span className={styles.loadPosts} onClick={loadposts}>
+          Carregar mais posts
+        </span>
       )}
     </main>
   );

@@ -1,1 +1,42 @@
-// TODO
+.postContainer {
+  margin-bottom: 5rem;
+}
+
+.postHeader {
+  margin-bottom: 4rem;
+
+  h1 {
+    font-weight: 700;
+    font-size: 3rem;
+    margin-bottom: 1.5rem;
+  }
+
+  div {
+    display: flex;
+
+    div {
+      display: flex;
+      align-items: center;
+      margin-right: 1.5rem;
+      color: var(--gray-300);
+    }
+
+    span {
+      margin-left: 0.5rem;
+    }
+  }
+}
+
+.postContent {
+  h1 {
+    font-weight: 700;
+    font-size: 2.25rem;
+
+    margin-bottom: 3rem;
+  }
+
+  p {
+    font-size: 1.125rem;
+    color: var(--gray-100);
+  }
+}
