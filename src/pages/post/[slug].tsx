@@ -1,4 +1,7 @@
+/* eslint-disable react/no-array-index-key */
 import { GetStaticPaths, GetStaticProps } from 'next';
+import { RichText } from 'prismic-dom';
+import { useEffect, useState } from 'react';
 
 import { FiUser, FiCalendar, FiClock } from 'react-icons/fi';
 
@@ -28,40 +31,70 @@ interface PostProps {
   post: Post;
 }
 
-export default function Post() {
+export default function Post({ post }: PostProps) {
+  const [readingTime, setReadingTime] = useState(0);
+  console.log('post: ', post);
+
+  function calculateReadingTime() {
+    const amountWords = post.data.content.reduce((acc, currentValue) => {
+      const headingWordsLength = currentValue.heading.split(' ').length;
+      const bodyWordsLength = RichText.asText(currentValue.body).split(
+        ' '
+      ).length;
+
+      return acc + headingWordsLength + bodyWordsLength;
+    }, 0);
+    setReadingTime(Math.ceil(amountWords / 200));
+  }
+
+  useEffect(() => {
+    calculateReadingTime();
+  }, []);
+
   return (
-    <main className={`${commonStyles.container} ${styles.postContainer}`}>
-      <section className={styles.postHeader}>
-        <h1>Criando um app CRA do zero</h1>
-        <div>
+    <>
+      <div>
+        <img
+          src={post.data.banner.url}
+          alt="teste"
+          className={styles.postImage}
+        />
+      </div>
+
+      <main className={`${commonStyles.container} ${styles.postContainer}`}>
+        <section className={styles.postHeader}>
+          <h1>{post.data.title}</h1>
           <div>
-            <FiCalendar />
-            <span>15 MAR 2021</span>
+            <div>
+              <FiCalendar />
+              <span>{post.first_publication_date}</span>
+            </div>
+
+            <div>
+              <FiUser />
+              <span>{post.data.author}</span>
+            </div>
+
+            <div>
+              <FiClock />
+              <span>{`${readingTime} min`}</span>
+            </div>
           </div>
+        </section>
 
-          <div>
-            <FiUser />
-            <span>Josepth Oliveira</span>
-          </div>
-
-          <div>
-            <FiClock />
-            <span>4 min</span>
-          </div>
-        </div>
-      </section>
-
-      <section className={styles.postContent}>
-        <h1>Poin et varius</h1>
-        <p>
-          Lorem Ipsum is simply dummy text of the printing and typesetting
-          industry.
-
-          Lorem Ipsum is simply dummy text of the printing and typesetting
-          industry.
-        </p>
-      </section>
-    </main>
+        {post.data.content.map((content, index) => (
+          <section key={index} className={styles.postContent}>
+            <h1>{content.heading}</h1>
+            {content.body.map((body, indexBody) => (
+              <div
+                key={indexBody}
+                dangerouslySetInnerHTML={{ __html: body.text }}
+              />
+            ))}
+          </section>
+        ))}
+      </main>
+    </>
   );
 }
 
@@ -80,9 +113,27 @@ export const getStaticProps = async ({ params }) => {
   const prismic = getPrismicClient({});
   const response = await prismic.getByUID('posts', String(slug), {});
 
-  console.log('response: ', response);
+  const post = {
+    first_publication_date: response.first_publication_date,
+    data: {
+      title: response.data.title,
+      banner: {
+        url: response.data.banner.url,
+      },
+      author: response.data.author,
+      content: response.data.content.map(content => ({
+        heading: content.heading,
+        body: content.body.map(body => ({
+          text: RichText.asHtml([body]),
+        })),
+      })),
+    },
+  };
 
   return {
-    props: {},
+    props: {
+      post,
+    },
+    revalidate: 60 * 60 * 24,
   };
 };
