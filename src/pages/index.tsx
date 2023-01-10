@@ -32,39 +32,33 @@ interface HomeProps {
   postsPagination: PostPagination;
 }
 
+function formatPostdate(postsData: Post[]): Post[] {
+  const postsFormated = postsData.map(post => ({
+    uid: post.uid,
+    data: {
+      title: post.data.title as string,
+      subtitle: post.data.subtitle as string,
+      author: post.data.author as string,
+    },
+    first_publication_date: format(
+      new Date(post.first_publication_date),
+      'd MMM yyyy',
+      { locale: ptBR }
+    ),
+  }));
+
+  return postsFormated;
+}
+
 export default function Home({ postsPagination }: HomeProps) {
   const [posts, setPosts] = useState({
     next_page: postsPagination.next_page,
-    results: postsPagination.results,
+    results: formatPostdate(postsPagination.results),
   });
-
-  function formatPostdate(postsData: Post[]): Post[] {
-    const postsFormated = postsData.map(post => ({
-      uid: post.uid,
-      data: {
-        title: post.data.title as string,
-        subtitle: post.data.subtitle as string,
-        author: post.data.author as string,
-      },
-      first_publication_date: format(
-        new Date(post.first_publication_date),
-        'd MMM yy',
-        { locale: ptBR }
-      ),
-    }));
-
-    return postsFormated;
-  }
 
   function loadposts() {
     fetch(postsPagination.next_page)
-      .then(response => {
-        if (response.ok) {
-          return response.json();
-        }
-
-        throw response;
-      })
+      .then(response => response.json())
       .then(data => {
         const newPosts = {
           next_page: data.next_page,
@@ -122,11 +116,7 @@ export const getStaticProps = async () => {
           subtitle: currentPost.data.subtitle as string,
           author: currentPost.data.author as string,
         },
-        first_publication_date: format(
-          new Date(currentPost.first_publication_date),
-          'd MMM yy',
-          { locale: ptBR }
-        ),
+        first_publication_date: currentPost.first_publication_date,
       };
     }),
   };
